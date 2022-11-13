@@ -1,0 +1,16 @@
+apiVersion: v2
+name: cestzam
+version: 1.0.0
+kubeVersion: '>= 1.24.0-any'
+description: Cestzam proxy service
+type: application
+keywords:
+  - cestzam
+home: https://github.com/Valuya/cestzam
+sources:
+  - https://github.com/Valuya/cestzam-helm-chart
+dependencies: [ ]
+maintainers: # (optional)
+  - name: Charly Ghislain
+    email: charlyghislain@gmail.com
+    url: https://github.com/cghislai

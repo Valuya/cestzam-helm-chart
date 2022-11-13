@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "cestzam.fullname" . }}-config
+  labels:
+{{ include "cestzam.labels" . | indent 4 }}
+    app.kubernetes.io/component: cestzam
+
+data:
+  be_valuya_cestzam_client_debug_enabled: {{ .Values.deployment.debugOutput.enabled | quote }}
+  be_valuya_cestzam_client_debug_outputPath: '/run/client-debug'
+  cestzam_health_enabled: {{ .Values.deployment.health.enabled | quote }}
+  cestzam_health_czam_user: {{ .Values.deployment.health.user | quote }}
+  cestzam_health_myminfin_enabled: {{ .Values.deployment.health.myminfin.enabled | quote }}
+  cestzam_health_myminfin_vatNumber: {{ .Values.deployment.health.myminfin.vatNumber | quote }}

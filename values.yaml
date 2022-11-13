@@ -1,0 +1,57 @@
+imagePullSecrets: {}
+
+service:
+  extraLabels: [ ]
+  annotations: { }
+  clusterIP: ''
+  externalIPs: [ ]
+  type: 'ClusterIP'
+
+ingress:
+  enabled: true
+  extraLabels: [ ]
+  annotations: { }
+  ingressClassName: nginx
+  host: ''
+
+deployment:
+  extraLabels: [ ]
+  annotations: { }
+  podAnnotations: { }
+  replicas: 1
+
+  imageName: docker.valuya.com/cestzam
+  imageTag: latest
+
+  debug:
+    enabled: false
+
+  debugOutput:
+    enabled: false
+    path: /run/client-debug
+    persistence:
+      enabled: true
+      size: 1Gi
+      annotations: {}
+      extraLabels: []
+
+  health:
+    enabled: true
+    user: ''
+    password:
+      secretName: ''
+      secretKey: ''
+    tokens:
+      secretName: ''
+      secretKey: ''
+    myminfin:
+      enabled: true
+      vatNumber: ''
+
+  resources:
+    requests:
+      cpu: ''
+      memory: ''
+    limits:
+      cpu: ''
+      memory: ''

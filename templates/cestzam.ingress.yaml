@@ -1,0 +1,37 @@
+{{- if .Values.ingress.enabled }}
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "cestzam.fullname" . }}
+  labels:
+{{ include "cestzam.labels" . | indent 4 }}
+    app.kubernetes.io/component: cestzam
+  {{- if .Values.ingress.extraLabels }}
+{{ toYaml .Values.ingress.extraLabels | indent 4 }}
+  {{- end }}
+
+  {{- if .Values.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.ingress.annotations | indent 4 }}
+  {{- end }}
+
+spec:
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+  rules:
+    - host: {{.Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "cestzam.fullname" . }}
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        -  {{.Values.ingress.host }}
+      secretName: {{.Values.ingress.host }}.tls
+
+{{ end }}

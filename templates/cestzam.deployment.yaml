@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "cestzam.fullname" . }}
+  labels:
+{{ include "cestzam.labels" . | indent 4 }}
+    app.kubernetes.io/component: cestzam
+  {{- if .Values.deployment.extraLabels }}
+{{ toYaml .Values.deployment.extraLabels | indent 4 }}
+  {{- end }}
+
+  {{- if .Values.deployment.annotations }}
+  annotations:
+{{ toYaml .Values.deployment.annotations | indent 4 }}
+  {{- end }}
+
+spec:
+  replicas: {{.Values.deployment.replicas}}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: cestzam
+  template:
+    metadata:
+      annotations:
+        checksum/configmap-env: {{ include (print $.Template.BasePath "/cestam-config.configMap.yaml") . | sha256sum }}
+        {{- if .Values.deployment.podAnnotations}}
+{{ toYaml .Values.deployment.podAnnotations | indent 8}}
+        {{- end }}
+      labels:
+{{ include "cestzam.labels" . | indent 8 }}
+        app.kubernetes.io/component: cestzam
+
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml . | nindent 8 }}
+      {{- end }}
+
+      securityContext:
+        fsGroup: 0 # Write as root group in mounted volumes
+
+      containers:
+        - name: cestzam
+          image: "{{.Values.deployment.imageName}}:{{.Values.deployment.imageTag }}"
+          imagePullPolicy: Always
+          {{ if .Values.deployment.debug.enabled }}
+          command: [ 'java', '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8787', '-jar', '/app.jar', '-s/default-config.yml' ]
+          {{ end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "cestzam.fullname" . }}-config
+          {{ if .Values.deployment.health.enabled }}
+          volumeMounts:
+            - mountPath: /config/cestzam-ws/
+              name: cestzam-secrets
+          {{- end }}
+          {{- if .Values.deployment.debugOutput.enabled }}
+            - mountPath: /run/client-debug/
+              name: cestzam-debug
+          {{- end }}
+
+          startupProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            failureThreshold: 10
+            timeoutSeconds: 30
+            httpGet:
+              path: cestzam/service/myminfin/health
+              port: 8080
+          resources:
+            requests:
+              cpu: {{ .Values.deployment.resources.requests.cpu | default "10m" }}
+              memory: {{ .Values.deployment.resources.requests.memory | default "768Mi" }}
+            limits:
+              cpu: {{ .Values.deployment.resources.limits.cpu | default "10m" }}
+              memory: {{ .Values.deployment.resources.limits.memory | default "768Mi" }}
+
+      volumes:
+
+        {{ if .Values.deployment.debugOutput.enabled }}
+        - name: cestzam-debug
+          {{- if .Values.deployment.debugOutput.persistence.enabled}}
+          persistentVolumeClaim:
+            claimName: {{ template "cestzam.fullname" . }}-debug-output
+          {{- else }}
+          emptyDir:
+            sizeLimit: {{.Values.deployment.debugOutput.persistence.size}}
+          {{- end }}
+        {{ end }}
+
+        {{ if .Values.deployment.health.enabled }}
+        - name: cestzam-secrets
+          projected:
+            sources:
+              - secret:
+                  name: {{ .Values.deployment.health.password.secretName }}
+                  items:
+                    - key: {{ .Values.deployment.health.password.secretKey }}
+                      path: cestzam.health.czam.password
+              - secret:
+                  name: {{ .Values.deployment.health.tokens.secretName }}
+                  items:
+                    - key: {{ .Values.deployment.health.tokens.secretKey }}
+                      path: cestzam.health.czam.tokensJson
+        {{ end }}

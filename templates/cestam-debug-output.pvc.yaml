@@ -1,0 +1,26 @@
+{{- if .Values.deployment.debugOutput.persistence.enabled }}
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "cestzam.fullname" . }}-debug-output
+  labels:
+{{ include "cestzam.labels" . | indent 4 }}
+    app.kubernetes.io/component: cestzam
+  {{- if .Values.deployment.debugOutput.persistence.extraLabels }}
+{{ toYaml .Values.deployment.debugOutput.persistence.extraLabels | indent 4 }}
+  {{- end }}
+
+  {{- if .Values.deployment.debugOutput.persistence.annotations }}
+  annotations:
+{{ toYaml .Values.deployment.debugOutput.persistence.annotations | indent 4 }}
+  {{- end }}
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.deployment.debugOutput.persistence.size }}
+
+{{- end }}
